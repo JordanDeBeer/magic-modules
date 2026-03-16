@@ -10,6 +10,21 @@ func revisionNameCustomizeDiff(_ context.Context, diff *schema.ResourceDiff, v i
 var cloudRunGoogleProvidedTemplateAnnotations = regexp.MustCompile(`template\.0\.metadata\.0\.annotations\.run\.googleapis\.com/sandbox`)
 var cloudRunGoogleProvidedTemplateAnnotations_autoscaling_maxscale = regexp.MustCompile(`template\.0\.metadata\.0\.annotations\.autoscaling\.knative\.dev/maxScale`)
 
+func validateCloudRunMetadataAnnotations(i any, s string) (warnings []string, es []error) {
+	panic("test?")
+	es = append(es, fmt.Errorf("testing bad error: %v!", i))
+	annotations, ok := i.(map[string]*schema.Schema)
+	if !ok {
+		es = append(es, fmt.Errorf("expected type of %q to be map[string]*schema.Schema", s))
+	}
+	_, hasDirectVPC := annotations["run.googleapis.com/network-interfaces"]
+	_, hasVPCConnector := annotations["run.googleapis.com/vpc-access-connector"]
+	if hasDirectVPC && hasVPCConnector {
+		es = append(es, fmt.Errorf("only one of network-intefaces and vpc-access-connector", i))
+	}
+	return warnings, es
+}
+
 func cloudrunTemplateAnnotationDiffSuppress(k, old, new string, d *schema.ResourceData) bool {
 	// Suppress diffs for the annotations provided by API
 	if cloudRunGoogleProvidedTemplateAnnotations.MatchString(k) &&
